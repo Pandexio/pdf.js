@@ -709,7 +709,7 @@ var JpegImage = (function JpegImageClosure() {
                   z = dctZigZag[j];
                   tableData[z] = data[offset++];
                 }
-              } else if ((quantizationTableSpec >> 4) === 1) { //16 bit
+              } else if ((quantizationTableSpec >> 4) === 1) { // 16 bit values
                 for (j = 0; j < 64; j++) {
                   z = dctZigZag[j];
                   tableData[z] = readUint16();
@@ -790,7 +790,7 @@ var JpegImage = (function JpegImageClosure() {
             break;
 
           case 0xFFDA: // SOS (Start of Scan)
-            var scanLength = readUint16();
+            readUint16(); // scanLength
             var selectorsCount = data[offset++];
             var components = [], component;
             for (i = 0; i < selectorsCount; i++) {
@@ -918,15 +918,15 @@ var JpegImage = (function JpegImageClosure() {
           return false;
         }
         return true;
-      } else { // `this.numComponents !== 3`
-        if (!this.adobe && this.colorTransform === 1) {
-          // If the Adobe transform marker is not present and the image
-          // dictionary has a 'ColorTransform' entry, explicitly set to `1`,
-          // then the colours should be transformed.
-          return true;
-        }
-        return false;
       }
+      // `this.numComponents !== 3`
+      if (!this.adobe && this.colorTransform === 1) {
+        // If the Adobe transform marker is not present and the image
+        // dictionary has a 'ColorTransform' entry, explicitly set to `1`,
+        // then the colours should be transformed.
+        return true;
+      }
+      return false;
     },
 
     _convertYccToRgb: function convertYccToRgb(data) {
@@ -1072,9 +1072,8 @@ var JpegImage = (function JpegImageClosure() {
         if (this._isColorConversionNeeded()) {
           if (forceRGBoutput) {
             return this._convertYcckToRgb(data);
-          } else {
-            return this._convertYcckToCmyk(data);
           }
+          return this._convertYcckToCmyk(data);
         } else if (forceRGBoutput) {
           return this._convertCmykToRgb(data);
         }

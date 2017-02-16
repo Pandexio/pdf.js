@@ -59,10 +59,10 @@ FontLoader.prototype = {
   },
 
   clear: function fontLoaderClear() {
-    var styleElement = this.styleElement;
-    if (styleElement) {
-      styleElement.parentNode.removeChild(styleElement);
-      styleElement = this.styleElement = null;
+    if (this.styleElement) {
+      // Note: ChildNode.remove doesn't throw if the parentNode is undefined.
+      this.styleElement.remove();
+      this.styleElement = null;
     }
     if (typeof PDFJSDev === 'undefined' || !PDFJSDev.test('MOZCENTRAL')) {
       this.nativeFontFaces.forEach(function(nativeFontFace) {
@@ -216,6 +216,7 @@ if (typeof PDFJSDev === 'undefined' || !PDFJSDev.test('MOZCENTRAL')) {
 
       var i, ii;
 
+      // The temporary canvas is used to determine if fonts are loaded.
       var canvas = document.createElement('canvas');
       canvas.width = 1;
       canvas.height = 1;
@@ -360,25 +361,25 @@ var FontFaceObject = (function FontFaceObjectClosure() {
   }
   FontFaceObject.prototype = {
     createNativeFontFace: function FontFaceObject_createNativeFontFace() {
-      if (typeof PDFJSDev === 'undefined' || !PDFJSDev.test('MOZCENTRAL')) {
-        if (!this.data) {
-          return null;
-        }
-
-        if (this.options.disableFontFace) {
-          this.disableFontFace = true;
-          return null;
-        }
-
-        var nativeFontFace = new FontFace(this.loadedName, this.data, {});
-
-        if (this.options.fontRegistry) {
-          this.options.fontRegistry.registerFont(this);
-        }
-        return nativeFontFace;
-      } else {
+      if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('MOZCENTRAL')) {
         throw new Error('Not implemented: createNativeFontFace');
       }
+
+      if (!this.data) {
+        return null;
+      }
+
+      if (this.options.disableFontFace) {
+        this.disableFontFace = true;
+        return null;
+      }
+
+      var nativeFontFace = new FontFace(this.loadedName, this.data, {});
+
+      if (this.options.fontRegistry) {
+        this.options.fontRegistry.registerFont(this);
+      }
+      return nativeFontFace;
     },
 
     createFontFaceRule: function FontFaceObject_createFontFaceRule() {
